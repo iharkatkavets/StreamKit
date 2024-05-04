@@ -63,6 +63,18 @@ final class StreamKitTests: XCTestCase {
         XCTAssertEqual(md5(originalFileURL), md5(decryptedFileURL))
     }
     
+    func testCompressEncryptDecryptDecompressPlainTextFileUsingSalsa20Stream() throws {
+        let key = genBufferOfLen(32)
+        let iv = genBufferOfLen(Salsa20IVSize)
+        
+        let originalFileURL = fileURL("PlainText")!
+        let encryptedFileURL = try compressAndEncryptFileUsingSalsa20(originalFileURL, key, iv)
+        let decryptedFileURL = try decryptAndDecompressFileUsingSalsa20(encryptedFileURL, key, iv)
+        
+        XCTAssertNotEqual(md5(originalFileURL), md5(encryptedFileURL))
+        XCTAssertEqual(md5(originalFileURL), md5(decryptedFileURL))
+    }
+    
     func testEncryptingDecrypting1MBFileUsingChaCha20Streams() throws {
         let key = genBufferOfLen(32)
         let iv = genBufferOfLen(ChaCha20IVSize)
@@ -201,7 +213,7 @@ extension StreamKitTests {
         
         let tmpBufferLen = 1<<16 // 65KB buffer
         var tmpBuffer = Array<UInt8>(repeating: 0, count: tmpBufferLen)
-        while decryptingStream.hasBytesAvailable {
+        while decompressingStream.hasBytesAvailable {
             let readLen = try decompressingStream.read(&tmpBuffer, maxLength: tmpBufferLen)
             try outputFileStream.write(tmpBuffer, length: readLen)
         }
